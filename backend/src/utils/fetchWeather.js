@@ -36,27 +36,7 @@ try {
   process.exit(1);
 }
 
-// Cache setup
-const cache = new NodeCache({ stdTTL: CACHE_TTL_SECONDS, checkperiod: 60 });
 
-// Helper to call OpenWeather and normalize payload
-async function fetchFromOpenWeather(cityId) {
-  const url = `https://api.openweathermap.org/data/2.5/weather?id=${encodeURIComponent(
-    cityId
-  )}&appid=${OWM_API_KEY}&units=metric`;
-
-  const resp = await axios.get(url, { timeout: 10000 });
-  const data = resp.data;
-
-  return {
-    id: data.id,
-    name: data.name,
-    weatherDescription:
-      data.weather && data.weather[0] ? data.weather[0].description : null,
-    temp: data.main ? data.main.temp : null,
-    raw: data
-  };
-}
 
 // Public functions
 async function getWeatherById(cityId) {
