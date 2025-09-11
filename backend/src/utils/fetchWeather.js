@@ -8,7 +8,7 @@ const OWM_API_KEY = process.env.OWM_API_KEY;
 const CACHE_TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS || 300); // default 5 minutes
 
 if (!OWM_API_KEY) {
-  console.error('ERROR: Please set OWM_API_KEY in .env');
+  console.error('ERROR: Please set API KEY in .env');
   process.exit(1);
 }
 
