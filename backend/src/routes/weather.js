@@ -1,4 +1,3 @@
-// src/routes/weather.js
 const express = require('express');
 const router = express.Router();
 const fetcher = require('../utils/fetchWeather');
