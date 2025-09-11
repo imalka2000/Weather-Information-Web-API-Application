@@ -12,24 +12,6 @@ if (!OWM_API_KEY) {
   process.exit(1);
 }
 
-// Load cities.json once
-const CITIES_PATH = path.join(__dirname, '..', '..', 'cities.json');
-let cities = [];
-try {
-  const raw = fs.readFileSync(CITIES_PATH, 'utf8');
-  const parsed = JSON.parse(raw);
-  cities = parsed
-    .map((c) => {
-      if (c.CityCode !== undefined) return String(c.CityCode);
-      if (c.id !== undefined) return String(c.id);
-      return null;
-    })
-    .filter(Boolean);
-  console.log(`Loaded ${cities.length} city codes from cities.json`);
-} catch (err) {
-  console.error('Failed to load/parse cities.json:', err.message);
-  process.exit(1);
-}
 
 // Cache setup
 const cache = new NodeCache({ stdTTL: CACHE_TTL_SECONDS, checkperiod: 60 });
