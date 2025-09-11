@@ -1,18 +1,17 @@
-// src/utils/fetchWeather.js
 const fs = require('fs');
 const path = require('path');
 const NodeCache = require('node-cache');
 const axios = require('axios');
 
 const OWM_API_KEY = process.env.OWM_API_KEY;
-const CACHE_TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS || 300); // default 5 minutes
+const CACHE_TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS || 300); //cashed for 5 minutes
 
 if (!OWM_API_KEY) {
-  console.error('ERROR: Please set API KEY in .env');
+  console.error('ERROR: Please set API KEY in .env file');
   process.exit(1);
 }
 
-// Load cities.json once
+// Load cities.json file
 const CITIES_PATH = path.join(__dirname, '..', '..', 'cities.json');
 let cities = [];
 try {
@@ -58,7 +57,7 @@ async function fetchFromOpenWeather(cityId) {
   };
 }
 
-// Public functions
+// Public function
 async function getWeatherById(cityId) {
   const cacheKey = `weather:${cityId}`;
   const cached = cache.get(cacheKey);
@@ -77,7 +76,8 @@ async function getWeatherById(cityId) {
   }
 }
 
-async function getAllWeather() {
+async function getAllWeather() 
+{
   // Fetch all in parallel while keeping failures separate
   const promises = cities.map((id) =>
     getWeatherById(id)
@@ -94,12 +94,11 @@ async function getAllWeather() {
   return { count: successes.length, successes, failures };
 }
 
-function getCities() {
+function getCities() 
+{
   return [...cities];
 }
 
 module.exports = {
-  getCities,
-  getWeatherById,
-  getAllWeather
+  getCities,getWeatherById,getAllWeather
 };
