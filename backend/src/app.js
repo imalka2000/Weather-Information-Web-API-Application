@@ -36,6 +36,28 @@ app.use((req, res, next) => {
 });
 
 
+// JWT middleware to validate access tokens issued by Auth0
+if (!process.env.AUTH0_ISSUER_BASE_URL || !process.env.AUTH0_AUDIENCE) {
+  console.error('ERROR: AUTH0_ISSUER_BASE_URL and AUTH0_AUDIENCE must be set in .env');
+  process.exit(1);
+}
+
+
+const checkJwt = jwt({
+  // Dynamically provide a signing key based on the kid in the header and the signing keys provided by the JWKS endpoint.
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `${process.env.AUTH0_ISSUER_BASE_URL}/.well-known/jwks.json`
+  }),
+  // Validate the audience and the issuer.
+  audience: process.env.AUTH0_AUDIENCE,
+  issuer: process.env.AUTH0_ISSUER_BASE_URL,
+  algorithms: ['RS256']
+});
+
+
 // Mount routes
 //app.use('/api/weather', weatherRoutes);
 app.use('/api/weather', requiresAuth(), weatherRoutes);
