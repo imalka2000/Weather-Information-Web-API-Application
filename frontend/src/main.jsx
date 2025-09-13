@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './app';
+import App from './app.jsx';
 import { Auth0Provider } from '@auth0/auth0-react';
 import './style.css';
 
