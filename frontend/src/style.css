@@ -167,8 +167,6 @@ button:disabled{ background:#8fbdfd; cursor:not-allowed; }
 /* small helpers */
 .fade-in{ animation:fadeInUp 420ms ease both; }
 @keyframes fadeInUp{ from{ transform:translateY(6px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
-
-
 /* =============================
    End styles.css
    ============================= */

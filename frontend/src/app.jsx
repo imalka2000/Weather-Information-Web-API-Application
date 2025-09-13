@@ -30,13 +30,17 @@ export default function App() {
         <section style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: 1100 }}>
             <Profile />
-            <Weather />
+            {isAuthenticated && <Weather />}
           </div>
         </section>
       </main>
 
-      <footer className="app-footer">
-        <p>Built with React + Auth0 + OpenWeatherMap API</p>
+    <footer className="app-footer">
+        <p>
+            <center>
+                Built with React + Auth0 + OpenWeatherMap API
+            </center>
+        </p>
       </footer>
     </div>
   );
