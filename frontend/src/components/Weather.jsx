@@ -83,7 +83,7 @@ export default function Weather() {
         }
       }
 
-        // if no suggestion or add by lat/lon failed, fallback to search+add by name
+        // fallback: search by name (if no lat/lon in suggestion)
       const sr = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(suggestion ? suggestion.name : query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -110,51 +110,51 @@ export default function Weather() {
   }
 
     // always fresh search before add
-    async function handleAddClick(e) {
-    e.preventDefault();
-     if (!isAuthenticated) {
-        setError('Please log in to add a city');
-        return;
+        async function handleAddClick(e) {
+        e.preventDefault();
+        if (!isAuthenticated) {
+            setError('Please log in to add a city');
+            return;
+            }
+        if (!query || query.trim().length < 2) {
+            setError('Enter at least 2 characters');
+            return;
+            }
+        try {
+            setLoading(true);
+            const token = await getAccessTokenSilently({
+            authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
+            });
+            // always search fresh
+            const sr = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(query)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+            });
+            const items = sr.data.results || [];
+            if (items.length === 0) {
+            setError('No matching city found.');
+            return;
+            }
+            const first = items[0];
+            // call /add with lat/lon
+            const resp2 = await axios.post(`${BACKEND}/api/weather/add`, {
+            lat: first.lat,
+            lon: first.lon
+            }, { headers: { Authorization: `Bearer ${token}` }});
+            if (resp2.data && resp2.data.added) {
+            await fetchAllWeather();
+            setQuery('');
+            setSuggestions([]);
+            } else {
+            setError('Failed to add city: ' + JSON.stringify(resp2.data));
+            }
+        } catch (err) {
+            console.error('addCity error', err);
+            if (err.response) setError(`Error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+            else setError(err.message);
+        } finally {
+            setLoading(false);
         }
-    if (!query || query.trim().length < 2) {
-        setError('Enter at least 2 characters');
-        return;
         }
-    try {
-        setLoading(true);
-        const token = await getAccessTokenSilently({
-        authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
-        });
-        // always search fresh
-        const sr = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-        });
-        const items = sr.data.results || [];
-        if (items.length === 0) {
-        setError('No matching city found.');
-        return;
-        }
-        const first = items[0];
-        // call /add with lat/lon
-        const resp2 = await axios.post(`${BACKEND}/api/weather/add`, {
-        lat: first.lat,
-        lon: first.lon
-        }, { headers: { Authorization: `Bearer ${token}` }});
-        if (resp2.data && resp2.data.added) {
-        await fetchAllWeather();
-        setQuery('');
-        setSuggestions([]);
-        } else {
-        setError('Failed to add city: ' + JSON.stringify(resp2.data));
-        }
-    } catch (err) {
-        console.error('addCity error', err);
-        if (err.response) setError(`Error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
-        else setError(err.message);
-    } finally {
-        setLoading(false);
-    }
-    }
 
 
 
