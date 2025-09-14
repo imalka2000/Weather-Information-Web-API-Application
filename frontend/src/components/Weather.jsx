@@ -71,7 +71,7 @@ export default function Weather() {
       const token = await getAccessTokenSilently({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }});
 
       if (suggestion && suggestion.lat !== undefined && suggestion.lon !== undefined) {
-        // first try to add by lat/lon -> backend will convert to id
+        // add by lat/lon
         const resp = await axios.post(`${BACKEND}/api/weather/add`, {
           lat: suggestion.lat,
           lon: suggestion.lon
@@ -83,8 +83,7 @@ export default function Weather() {
         }
       }
 
-      // fallback: if suggestion has id (rare), or user typed plain text, attempt to add by name via search first
-      // attempt search again to pick first result
+        // if no suggestion or add by lat/lon failed, fallback to search+add by name
       const sr = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(suggestion ? suggestion.name : query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -93,7 +92,7 @@ export default function Weather() {
         setError('No matching city found.');
         return;
       }
-      // use first item and add via lat/lon
+        // pick first and add by lat/lon
       const first = items[0];
       const resp2 = await axios.post(`${BACKEND}/api/weather/add`, { lat: first.lat, lon: first.lon }, { headers: { Authorization: `Bearer ${token}` }});
       if (resp2.data && resp2.data.added) {
@@ -109,24 +108,6 @@ export default function Weather() {
       setLoading(false);
     }
   }
-
-//   // small handler for clicking Add (auto-pick first suggestion if exists)
-//   async function handleAddClick(e) {
-//     e.preventDefault();
-//     if (!isAuthenticated) { setError('Please log in to add a city'); return; }
-//     if (suggestions.length > 0) {
-//       await addCityFromSuggestion(suggestions[0]);
-//     } else {
-//       // trigger search and then add first
-//       await searchCity(query);
-//       if (suggestions.length > 0) {
-//         await addCityFromSuggestion(suggestions[0]);
-//       } else {
-//         setError('No suggestion to add. Try a more specific name.');
-//       }
-//     }
-//   }
-
 
     // always fresh search before add
     async function handleAddClick(e) {

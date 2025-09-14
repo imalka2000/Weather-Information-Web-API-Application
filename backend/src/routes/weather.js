@@ -34,10 +34,7 @@ router.get('/', async (req, res) => {
 
 
 
-/**
- * NEW: GET /api/weather/search?q=London
- * Uses OpenWeather geocoding to return up to 5 candidate places
- */
+/*NEW: GET /api/weather/search?q=London*/
 router.get('/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: 'q query param required' });
@@ -49,10 +46,7 @@ router.get('/search', async (req, res) => {
   }
 });
 
-/**
- * NEW: POST /api/weather/add
- * body: { id: '12345' } OR { lat: 12.34, lon: 56.78 }
- */
+/* NEW: POST /api/weather/add */
 router.post('/add', express.json(), async (req, res) => {
   const { id, lat, lon } = req.body || {};
   try {
