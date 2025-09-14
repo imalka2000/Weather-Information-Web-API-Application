@@ -12,7 +12,25 @@ This is the frontend for the Weather Information Web API Application. It provide
 - Detailed view for each city
 - Responsive and visually appealing design
 
-## Folder Structure
+
+## Project Structure
+
+### Backend
+```
+backend/
+  cities.json
+  package.json
+  server.js
+  src/
+    app.js
+    routes/
+      health.js
+      weather.js
+    utils/
+      fetchWeather.js
+```
+
+### Frontend
 ```
 frontend/
   .env.local
