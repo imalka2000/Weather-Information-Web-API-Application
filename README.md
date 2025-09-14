@@ -1,72 +1,162 @@
-# Weather Information Web API Application - Frontend
+# Weather Information Web API Application
 
-## Overview
-This is the frontend for the Weather Information Web API Application. It provides a modern, responsive UI for users to view weather data for multiple cities, add new cities, and see detailed weather information. Authentication is handled via Auth0.
+A full-stack web application for searching, adding, and viewing weather information for cities around the world.  
+This project includes both a **frontend** (React) and a **backend** (Node.js/Express).
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Project Structure](#project-structure)
+  - [Frontend](#frontend-structure)
+  - [Backend](#backend-structure)
+- [Screenshots](#screenshots)
+- [Getting Started](#getting-started)
+  - [Backend Setup](#backend-setup)
+  - [Frontend Setup](#frontend-setup)
+- [Tech Stack](#tech-stack)
+- [License](#license)
+
+---
 
 ## Features
-- User authentication (login/logout)
-- Profile display
-- Add city by name (with suggestions)
-- Fetch and display weather for all cities
-- Weather cards with details (temperature, humidity, pressure, wind, sunrise/sunset, etc.)
-- Detailed view for each city
-- Responsive and visually appealing design
 
-## Folder Structure
+- User authentication (Auth0)
+- Search and add cities to your weather dashboard
+- View current weather details for multiple cities
+- Responsive, modern UI with weather cards and details
+- Secure backend API for weather data
+
+---
+
+## Project Structure
+
+### Frontend Structure
+
 ```
 frontend/
-  .env.local
-  index.html
-  package.json
-  vite.config.js
-  public/
-    vite.svg
-  src/
-    app.jsx
-    main.jsx
-    style.css
-    assets/
-      icons/
-    components/
-      CityCard.jsx
-      CityDetail.jsx
-      Profile.jsx
-      Weather.jsx
-      WeatherList.jsx
-    pages/
+│   .env.local
+│   .gitignore
+│   index.html
+│   package.json
+│   README.md
+│   vite.config.js
+│
+├── public/
+│     vite.svg
+│
+└── src/
+      app.jsx
+      main.jsx
+      style.css
+      assets/
+        icons/
+      components/
+        CityCard.jsx
+        CityDetail.jsx
+        Profile.jsx
+        Weather.jsx
+        WeatherList.jsx
+      pages/
 ```
 
-## Main Components
-- **app.jsx**: Main app layout, header, authentication buttons, and routing.
-- **Profile.jsx**: Shows user info after login.
-- **Weather.jsx**: Main weather dashboard, add/search city, weather cards, and details.
-- **WeatherList.jsx**: Renders a grid of weather cards.
-- **CityCard.jsx**: Individual weather card for a city.
-- **CityDetail.jsx**: Expanded weather details for a selected city.
+### Backend Structure
 
-## Usage
-1. Install dependencies:
+```
+backend/
+│   .env
+│   .gitignore
+│   cities.json
+│   package.json
+│   server.js
+│
+└── src/
+      app.js
+      routes/
+        health.js
+        weather.js
+      utils/
+        fetchWeather.js
+```
+
+---
+
+## Screenshots
+
+> Screenshots are located in the `resources/` folder.
+
+### Home Page
+
+![Home Page](resources/Screenshot_14-9-2025_154728_localhost.jpeg)
+
+### Login Page
+
+![Login Page](resources/Screenshot_14-9-2025_154746_dev-eyo45wtq47mwp1qa.us.auth0.com.jpeg)
+
+### Weather Cards
+
+![Weather Cards](resources/Screenshot_14-9-2025_15481_localhost.jpeg)
+
+### City Details
+
+![City Details](resources/Screenshot_14-9-2025_154837_localhost.jpeg)
+
+### Add City & Empty State
+
+![Add City](resources/Screenshot_14-9-2025_154924_localhost.jpeg)
+![Empty State](resources/Screenshot_14-9-2025_15495_localhost.jpeg)
+
+---
+
+## Getting Started
+
+### Backend Setup
+
+1. **Install dependencies:**
    ```bash
+   cd backend
    npm install
    ```
-2. Set up `.env.local` with your Auth0 and backend API settings.
-3. Start the frontend:
+2. **Configure environment variables:**  
+   Copy `.env.example` to `.env` and fill in required values (API keys, Auth0, etc).
+
+3. **Start the backend server:**
+   ```bash
+   node server.js
+   ```
+   The backend will run on the port specified in `.env`.
+
+### Frontend Setup
+
+1. **Install dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. **Configure environment variables:**  
+   Copy `.env.local.example` to `.env.local` and fill in required values (API endpoints, Auth0, etc).
+
+3. **Start the frontend dev server:**
    ```bash
    npm run dev
    ```
-4. Log in and use the app to view, add, and manage city weather data.
+   The frontend will run on [http://localhost:5173](http://localhost:5173) (default Vite port).
 
-## Screenshots
-- Home page with weather cards
-- Detailed city weather view
-- Login and profile display
+---
 
-## Technologies
-- React
-- Vite
-- Auth0
-- Axios
-- CSS
+## Tech Stack
+
+- **Frontend:** React, Vite, CSS
+- **Backend:** Node.js, Express
+- **Authentication:** Auth0
+- **Weather Data:** OpenWeatherMap API (or similar)
+- **Other:** Axios, dotenv
+
+---
 
 ## License
-2021 Fidenz Technologies
+
+This project is licensed under the MIT License.
+
+---
