@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import WeatherList from './WeatherList';
@@ -16,6 +16,12 @@ export default function Weather() {
   const [lastFetched, setLastFetched] = useState(null);
   const [selected, setSelected] = useState(null);
 
+  // Add city UI
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const inputRef = useRef(null);
+
   async function fetchAllWeather() {
     setError('');
     setResult(null);
@@ -23,15 +29,8 @@ export default function Weather() {
     setSelected(null);
 
     try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
-      });
-
-      const resp = await axios.get(`${BACKEND}/api/weather`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 20000
-      });
-
+      const token = await getAccessTokenSilently({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }});
+      const resp = await axios.get(`${BACKEND}/api/weather`, { headers: { Authorization: `Bearer ${token}` }});
       setResult(resp.data);
       setLastFetched(new Date().toISOString());
     } catch (err) {
@@ -39,51 +38,146 @@ export default function Weather() {
       if (err.response) setError(`Error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
       else if (err.request) setError('No response from backend. Check server/CORS.');
       else setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
-  async function fetchCities() {
-    setError('');
-    setResult(null);
-    setLoading(true);
-    setSelected(null);
-
+  async function searchCity(q) {
+    if (!q || q.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    setSearching(true);
     try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
+      const token = await getAccessTokenSilently({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }});
+      const resp = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(q)}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-
-      const resp = await axios.get(`${BACKEND}/api/weather/cities`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 10000
-      });
-
-      const cityCodes = resp.data.cityCodes || [];
-      const successes = cityCodes.map((id) => ({
-        id,
-        cached: false,
-        data: { id: Number(id), name: id, weatherDescription: null, temp: null }
-      }));
-      setResult({ count: cityCodes.length, successes, failures: [] });
-      setLastFetched(new Date().toISOString());
+      setSuggestions(resp.data.results || []);
     } catch (err) {
-      console.error(err);
+      console.error('search error', err);
+      setSuggestions([]);
+    } finally { setSearching(false); }
+  }
+
+  // call when user confirms add (either picks suggestion or query)
+  async function addCityFromSuggestion(suggestion) {
+    // suggestion: { name, country, state, lat, lon }
+    setError('');
+    setSearching(false);
+    setSuggestions([]);
+    setQuery('');
+    try {
+      setLoading(true);
+      const token = await getAccessTokenSilently({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }});
+
+      if (suggestion && suggestion.lat !== undefined && suggestion.lon !== undefined) {
+        // first try to add by lat/lon -> backend will convert to id
+        const resp = await axios.post(`${BACKEND}/api/weather/add`, {
+          lat: suggestion.lat,
+          lon: suggestion.lon
+        }, { headers: { Authorization: `Bearer ${token}` }});
+        if (resp.data && resp.data.added) {
+          // refresh
+          await fetchAllWeather();
+          return;
+        }
+      }
+
+      // fallback: if suggestion has id (rare), or user typed plain text, attempt to add by name via search first
+      // attempt search again to pick first result
+      const sr = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(suggestion ? suggestion.name : query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const items = sr.data.results || [];
+      if (items.length === 0) {
+        setError('No matching city found.');
+        return;
+      }
+      // use first item and add via lat/lon
+      const first = items[0];
+      const resp2 = await axios.post(`${BACKEND}/api/weather/add`, { lat: first.lat, lon: first.lon }, { headers: { Authorization: `Bearer ${token}` }});
+      if (resp2.data && resp2.data.added) {
+        await fetchAllWeather();
+      } else {
+        setError('Failed to add city: ' + JSON.stringify(resp2.data));
+      }
+    } catch (err) {
+      console.error('addCity error', err);
       if (err.response) setError(`Error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
-      else if (err.request) setError('No response from backend. Check server/CORS.');
       else setError(err.message);
     } finally {
       setLoading(false);
     }
   }
 
-  function prettyTime(iso) {
-    if (!iso) return 'Never';
-    return new Date(iso).toLocaleString();
-  }
+//   // small handler for clicking Add (auto-pick first suggestion if exists)
+//   async function handleAddClick(e) {
+//     e.preventDefault();
+//     if (!isAuthenticated) { setError('Please log in to add a city'); return; }
+//     if (suggestions.length > 0) {
+//       await addCityFromSuggestion(suggestions[0]);
+//     } else {
+//       // trigger search and then add first
+//       await searchCity(query);
+//       if (suggestions.length > 0) {
+//         await addCityFromSuggestion(suggestions[0]);
+//       } else {
+//         setError('No suggestion to add. Try a more specific name.');
+//       }
+//     }
+//   }
 
-  // Remove a city locally (for UX)
+
+    // always fresh search before add
+    async function handleAddClick(e) {
+    e.preventDefault();
+     if (!isAuthenticated) {
+        setError('Please log in to add a city');
+        return;
+        }
+    if (!query || query.trim().length < 2) {
+        setError('Enter at least 2 characters');
+        return;
+        }
+    try {
+        setLoading(true);
+        const token = await getAccessTokenSilently({
+        authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
+        });
+        // always search fresh
+        const sr = await axios.get(`${BACKEND}/api/weather/search?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+        });
+        const items = sr.data.results || [];
+        if (items.length === 0) {
+        setError('No matching city found.');
+        return;
+        }
+        const first = items[0];
+        // call /add with lat/lon
+        const resp2 = await axios.post(`${BACKEND}/api/weather/add`, {
+        lat: first.lat,
+        lon: first.lon
+        }, { headers: { Authorization: `Bearer ${token}` }});
+        if (resp2.data && resp2.data.added) {
+        await fetchAllWeather();
+        setQuery('');
+        setSuggestions([]);
+        } else {
+        setError('Failed to add city: ' + JSON.stringify(resp2.data));
+        }
+    } catch (err) {
+        console.error('addCity error', err);
+        if (err.response) setError(`Error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+        else setError(err.message);
+    } finally {
+        setLoading(false);
+    }
+    }
+
+
+
+  // Remove locally (same as earlier)
   function removeCity(id) {
     if (!result) return;
     const newSuccesses = result.successes.filter(s => s.id !== id);
@@ -95,13 +189,43 @@ export default function Weather() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h3 style={{ margin: 0 }}>Weather</h3>
         <div style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.85)' }}>
-          Last fetched: <strong>{prettyTime(lastFetched)}</strong>
+          Last fetched: <strong>{lastFetched ? new Date(lastFetched).toLocaleString() : 'Never'}</strong>
         </div>
       </div>
 
+      {/* Add city UI */}
+      <form onSubmit={(e) => { e.preventDefault(); handleAddClick(e); }} style={{ display: 'flex', gap: 10, marginTop: 12, alignItems: 'center' }}>
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(ev) => { setQuery(ev.target.value); searchCity(ev.target.value); }}
+          placeholder="Enter a city"
+          style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff' }}
+        />
+        <button type="submit" disabled={!isAuthenticated || loading}>Add City</button>
+      </form>
+
+      {/* suggestions */}
+      {searching && <div style={{ marginTop: 8, color: 'rgba(255,255,255,0.75)' }}>Searching…</div>}
+      {suggestions.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: 6 }}>Suggestions (click to add)</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {suggestions.map((s, i) => (
+              <button
+                key={`${s.name}-${i}`}
+                style={{ background: 'rgba(255,255,255,0.06)', padding: '6px 10px', borderRadius: 8 }}
+                onClick={async (ev) => { ev.preventDefault(); await addCityFromSuggestion(s); }}
+              >
+                {s.name}{s.state ? `, ${s.state}` : ''} {s.country ? `(${s.country})` : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 12 }}>
-        <button onClick={fetchCities} disabled={!isAuthenticated || loading}>Fetch Cities</button>
-        <button onClick={fetchAllWeather} disabled={!isAuthenticated || loading}>Fetch All Weather</button>
+        <button onClick={() => fetchAllWeather()} disabled={!isAuthenticated || loading}>Fetch All Weather</button>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <label style={{ marginRight: 6, opacity: 0.8 }}>Unit</label>
@@ -135,9 +259,7 @@ export default function Weather() {
         </div>
       )}
 
-      {selected && (
-        <CityDetail city={selected} unit={unit} onClose={() => setSelected(null)} />
-      )}
+      {selected && <CityDetail city={selected} unit={unit} onClose={() => setSelected(null)} />}
     </div>
   );
 }

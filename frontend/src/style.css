@@ -167,6 +167,28 @@ button:disabled{ background:#8fbdfd; cursor:not-allowed; }
 /* small helpers */
 .fade-in{ animation:fadeInUp 420ms ease both; }
 @keyframes fadeInUp{ from{ transform:translateY(6px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+
+/* footer */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full height */
+}
+
+.app-main {
+  flex: 1; /* Take up remaining space */
+}
+
+.app-footer {
+  text-align: center;
+  padding: 12px;
+  font-size: 13px;
+  color: #6b7280;
+  /* background: #f1f5f9; */
+  background:linear-gradient(180deg,#183567,#213a66);
+
+}
 /* =============================
    End styles.css
    ============================= */

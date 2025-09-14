@@ -37,9 +37,10 @@ export default function App() {
 
     <footer className="app-footer">
         <p>
-            <center>
+            <center>Fidenz Technologies</center>
+            {/* <center>
                 Built with React + Auth0 + OpenWeatherMap API
-            </center>
+            </center> */}
         </p>
       </footer>
     </div>
